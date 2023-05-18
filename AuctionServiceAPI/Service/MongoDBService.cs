@@ -109,14 +109,37 @@ namespace AuctionServiceAPI.Service
             }
         }
 
-        public async Task AddBidToAuction(BidDTO bidDTO, string id)
+        public async Task<Bid> AddBidToAuction(BidDTO bidDTO, string auctionID)
         {
             try
             {
                 _logger.LogInformation("AddBidToAuction kaldt");
 
+                Auction auction = new Auction();
+
+                auction = await _listingsCollection.Find(x => x.AuctionID == auctionID).FirstOrDefaultAsync();
+
+                if (auction == null)
+                {
+                    _logger.LogError("Auction not found");
+
+                    return null;
+                }
+                else if (auction.StartDate < DateTime.Now && auction.EndDate > DateTime.Now)
+                {
+
+                }
+                else
+                {
+                    _logger.LogError("Auction not active");
+
+                    return null;
+                }
+
+
+
                 // Find the document to update
-                var filter = Builders<Auction>.Filter.Eq("AuctionID", id);
+                var filter = Builders<Auction>.Filter.Eq("AuctionID", auctionID);
 
                 User bidder = new User();
                 bidder = _userCollection.Find(x => x.UserID == bidDTO.BidderID).FirstOrDefault<User>();

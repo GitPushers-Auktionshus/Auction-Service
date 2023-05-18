@@ -1,20 +1,6 @@
-using System.Threading;
-using System.Collections.Generic;
-using System;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
-using MongoDB.Bson;
-using System.Text;
 using AuctionServiceAPI.Model;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Cryptography;
-using MongoDB.Bson.Serialization.Attributes;
-using System.IO.Pipelines;
-using System.IO;
 using AuctionServiceAPI.Service;
-using AuctionServiceAPI.Model;
 
 namespace AuctionServiceAPI.Controllers;
 
@@ -35,13 +21,10 @@ public class AuctionServiceController : ControllerBase
         _service = service;
     }
 
-    //POST - Adds a new article
+    //POST - Adds a new bid
     [HttpPut("addBid/{id}")]
-    public async Task<IActionResult> AddBid(BidDTO bidDTO, string id)
+    public async Task<Bid> AddBid(BidDTO bidDTO, string auctionID)
     {
-
-        await _service.AddBidToAuction(bidDTO, id);
-
-        return Ok("Test");
+        return await _service.AddBidToAuction(bidDTO, auctionID);
     }
 }

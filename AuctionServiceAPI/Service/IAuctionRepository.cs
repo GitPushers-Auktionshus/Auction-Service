@@ -6,8 +6,7 @@ namespace AuctionServiceAPI.Service
 {
     public interface IAuctionRepository
     {
-
-        public Task AddBidToAuction(BidDTO bidDTO, string id);
+        public Task<Bid> AddBidToAuction(BidDTO bidDTO, string auctionID);
 
     }
 
