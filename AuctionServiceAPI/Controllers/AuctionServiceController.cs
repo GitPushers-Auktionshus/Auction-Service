@@ -22,9 +22,9 @@ public class AuctionServiceController : ControllerBase
     }
 
     //POST - Adds a new bid
-    [HttpPut("addBid/{id}")]
-    public async Task<Bid> AddBid(BidDTO bidDTO, string auctionID)
+    [HttpPost("addBid")]
+    public async Task<Bid> AddBid(BidDTO bidDTO)
     {
-        return await _service.AddBidToAuction(bidDTO, auctionID);
+        return await _service.AddBidToAuction(bidDTO);
     }
 }

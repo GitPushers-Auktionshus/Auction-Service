@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Text;
+using System.Text.Json;
 using AuctionServiceAPI.Controllers;
 using AuctionServiceAPI.Model;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using RabbitMQ.Client;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace AuctionServiceAPI.Service
@@ -26,6 +29,7 @@ namespace AuctionServiceAPI.Service
         private readonly string _articleCollectionName;
         private readonly string _auctionHouseCollectionName;
         private readonly string _listingsCollectionName;
+        private readonly string _hostName;
 
         private readonly string _imagePath;
 
@@ -45,7 +49,9 @@ namespace AuctionServiceAPI.Service
                 // Retrieves enviroment variables from program.cs, from injected EnviromentVariables class 
                 //_secret = config["Secret"] ?? "Secret missing";
                 //_issuer = config["Issuer"] ?? "Issue'er missing";
-                //_connectionURI = config["ConnectionURI"] ?? "ConnectionURI missing";
+                _connectionURI = config["ConnectionURI"] ?? "ConnectionURI missing";
+                _hostName = config["HostnameRabbit"];
+
 
                 //// Retrieves User database and collections
                 //_usersDatabase = config["UsersDatabase"] ?? "Userdatabase missing";
@@ -64,7 +70,6 @@ namespace AuctionServiceAPI.Service
                 throw;
             }
 
-            _connectionURI = "mongodb://admin:1234@localhost:27018/";
 
             // User database and collections
             _usersDatabase = "Users";
@@ -77,11 +82,12 @@ namespace AuctionServiceAPI.Service
 
             // Auction database and collection
             _auctionsDatabase = "Auctions";
-            _listingsCollectionName = "listings";
+            _listingsCollectionName = "listing";
+
 
             //_imagePath = "/Users/jacobkaae/Downloads/";
 
-            _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}");
+            _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}, HostnameRabbit: {_hostName}");
             _logger.LogInformation($"ArticleService Database and Collections: Userdatabase: {_usersDatabase}, Inventorydatabase: {_inventoryDatabase}, Auctiondatabase: {_auctionsDatabase}, UserCollection: {_userCollectionName}, AuctionHouseCollection: {_auctionHouseCollectionName}, ArticleCollection: {_articleCollectionName}, ListingsCollection: {_listingsCollectionName}");
 
             try
@@ -109,15 +115,15 @@ namespace AuctionServiceAPI.Service
             }
         }
 
-        public async Task<Bid> AddBidToAuction(BidDTO bidDTO, string auctionID)
+        public async Task<Bid> AddBidToAuction(BidDTO bidDTO)
         {
             try
             {
-                _logger.LogInformation("AddBidToAuction kaldt");
+                _logger.LogInformation($"AddBidToAuction kaldt, Price: {bidDTO.Price}, BidderID: {bidDTO.BidderID}, AuctionID: {bidDTO.AuctionID}");
 
                 Auction auction = new Auction();
 
-                auction = await _listingsCollection.Find(x => x.AuctionID == auctionID).FirstOrDefaultAsync();
+                auction = await _listingsCollection.Find(x => x.AuctionID == bidDTO.AuctionID).FirstOrDefaultAsync();
 
                 if (auction == null)
                 {
@@ -127,7 +133,36 @@ namespace AuctionServiceAPI.Service
                 }
                 else if (auction.StartDate < DateTime.Now && auction.EndDate > DateTime.Now)
                 {
+                    _logger.LogInformation("Auction active");
 
+                    //Opretter forbindelse til RabbitMQ
+                    var factory = new ConnectionFactory
+                    {
+                        HostName = _hostName
+                    };
+
+                    using var connection = factory.CreateConnection();
+                    using var channel = connection.CreateModel();
+
+                    channel.ExchangeDeclare(exchange: "AuctionHouse", type: ExchangeType.Topic);
+
+                    // Serialiseres til JSON
+                    string message = JsonSerializer.Serialize(bidDTO);
+
+                    _logger.LogInformation($"JsonSerialized message: \n\t{message}");
+
+                    // Konverteres til byte-array
+                    var body = Encoding.UTF8.GetBytes(message);
+
+                    // Sendes til Service-køen
+                    channel.BasicPublish(exchange: "AuctionHouse",
+                                         routingKey: "AuctionBid",
+                                         basicProperties: null,
+                                         body: body);
+
+                    _logger.LogInformation($"Bid oprettet og sendt");
+
+                    return null;
                 }
                 else
                 {
@@ -135,30 +170,6 @@ namespace AuctionServiceAPI.Service
 
                     return null;
                 }
-
-
-
-                // Find the document to update
-                var filter = Builders<Auction>.Filter.Eq("AuctionID", auctionID);
-
-                User bidder = new User();
-                bidder = _userCollection.Find(x => x.UserID == bidDTO.BidderID).FirstOrDefault<User>();
-
-                // Pushes the image to the article
-                var update = Builders<Auction>.Update.Push("Bids", new Bid
-                {
-                    BidID = ObjectId.GenerateNewId().ToString(),
-                    Date = DateTime.UtcNow,
-                    Price = bidDTO.Price,
-                    Bidder = bidder,
-                });
-
-                // Updates the document with the new image
-                var result = _listingsCollection.UpdateOne(filter, update);
-
-                Console.WriteLine($"{result.ModifiedCount} document(s) updated.");
-
-                return;
             }
             catch (Exception ex)
             {
