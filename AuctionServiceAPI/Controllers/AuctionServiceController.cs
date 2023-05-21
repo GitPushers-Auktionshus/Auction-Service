@@ -25,6 +25,8 @@ public class AuctionServiceController : ControllerBase
     [HttpPost("addBid")]
     public async Task<Bid> AddBid(BidDTO bidDTO)
     {
+        _logger.LogInformation($"[POST] addBid endpoint reached");
+
         return await _service.AddBidToAuction(bidDTO);
     }
 }

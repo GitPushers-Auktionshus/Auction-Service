@@ -109,7 +109,7 @@ namespace AuctionServiceAPI.Service
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Fejl ved oprettelse af forbindelse: {ex.Message}");
+                _logger.LogError($"Error trying to connect to database: {ex.Message}");
 
                 throw;
             }
@@ -119,7 +119,7 @@ namespace AuctionServiceAPI.Service
         {
             try
             {
-                _logger.LogInformation($"AddBidToAuction kaldt, Price: {bidDTO.Price}, BidderID: {bidDTO.BidderID}, AuctionID: {bidDTO.AuctionID}");
+                _logger.LogInformation($"[*] AddBidToAuction called: Adding bid to auction\n Price: {bidDTO.Price}, BidderID: {bidDTO.BidderID}, AuctionID: {bidDTO.AuctionID}");
 
                 Auction auction = new Auction();
 
@@ -160,7 +160,7 @@ namespace AuctionServiceAPI.Service
                                          basicProperties: null,
                                          body: body);
 
-                    _logger.LogInformation($"Bid oprettet og sendt");
+                    _logger.LogInformation($"Bid created and posted");
 
                     return null;
                 }
@@ -173,7 +173,7 @@ namespace AuctionServiceAPI.Service
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Fejl ved AddImageToArticle: {ex.Message}");
+                _logger.LogError($"EXCEPTION CAUGHT: {ex.Message}");
 
                 throw;
             }
