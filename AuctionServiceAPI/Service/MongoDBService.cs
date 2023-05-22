@@ -54,7 +54,7 @@ namespace AuctionServiceAPI.Service
 
 
                 //// Retrieves User database and collections
-                //_usersDatabase = config["UsersDatabase"] ?? "Userdatabase missing";
+                //_usersDatabase = config["UsersDatabagitse"] ?? "Userdatabase missing";
                 //_userCollectionName = config["UserCollection"] ?? "Usercollection name missing";
                 //_auctionHouseCollectionName = config["AuctionHouseCollection"] ?? "Auctionhousecollection name missing";
 
