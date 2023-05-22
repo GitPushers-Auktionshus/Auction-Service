@@ -135,34 +135,43 @@ namespace AuctionServiceAPI.Service
                 {
                     _logger.LogInformation("Auction active");
 
-                    //Opretter forbindelse til RabbitMQ
-                    var factory = new ConnectionFactory
+                    if (bidDTO.Price > auction.HighestBid)
                     {
-                        HostName = _hostName
-                    };
+                        //Opretter forbindelse til RabbitMQ
+                        var factory = new ConnectionFactory
+                        {
+                            HostName = _hostName
+                        };
 
-                    using var connection = factory.CreateConnection();
-                    using var channel = connection.CreateModel();
+                        using var connection = factory.CreateConnection();
+                        using var channel = connection.CreateModel();
 
-                    channel.ExchangeDeclare(exchange: "AuctionHouse", type: ExchangeType.Topic);
+                        channel.ExchangeDeclare(exchange: "AuctionHouse", type: ExchangeType.Topic);
 
-                    // Serialiseres til JSON
-                    string message = JsonSerializer.Serialize(bidDTO);
+                        // Serialiseres til JSON
+                        string message = JsonSerializer.Serialize(bidDTO);
 
-                    _logger.LogInformation($"JsonSerialized message: \n\t{message}");
+                        _logger.LogInformation($"JsonSerialized message: \n\t{message}");
 
-                    // Konverteres til byte-array
-                    var body = Encoding.UTF8.GetBytes(message);
+                        // Konverteres til byte-array
+                        var body = Encoding.UTF8.GetBytes(message);
 
-                    // Sendes til Service-køen
-                    channel.BasicPublish(exchange: "AuctionHouse",
-                                         routingKey: "AuctionBid",
-                                         basicProperties: null,
-                                         body: body);
+                        // Sendes til Service-køen
+                        channel.BasicPublish(exchange: "AuctionHouse",
+                                             routingKey: "AuctionBid",
+                                             basicProperties: null,
+                                             body: body);
 
-                    _logger.LogInformation($"Bid created and posted");
+                        _logger.LogInformation($"Bid created and posted");
+
+                        return null;
+
+                    }
+
+                    _logger.LogInformation($"Current bid ({bidDTO.Price}) must be higher than the highest bid ({auction.HighestBid})");
 
                     return null;
+
                 }
                 else
                 {
