@@ -21,12 +21,21 @@ public class AuctionServiceController : ControllerBase
         _service = service;
     }
 
-    //POST - Adds a new bid
-    [HttpPost("addBid")]
+    //PUT - Adds a new bid
+    [HttpPut("addBid")]
     public async Task<Bid> AddBid(BidDTO bidDTO)
     {
-        _logger.LogInformation($"[POST] addBid endpoint reached");
+        _logger.LogInformation($"[PUT] addBid endpoint reached");
 
         return await _service.AddBidToAuction(bidDTO);
+    }
+
+    //PUT - Adds a new comment
+    [HttpPut("addComment")]
+    public async Task<Comment> AddComment(CommentDTO commentDTO)
+    {
+        _logger.LogInformation($"[PUT] addComment endpoint reached");
+
+        return await _service.AddCommentToAuction(commentDTO);
     }
 }

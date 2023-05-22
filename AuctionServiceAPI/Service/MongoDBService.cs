@@ -179,5 +179,45 @@ namespace AuctionServiceAPI.Service
             }
         }
 
+        public async Task<Comment> AddCommentToAuction(CommentDTO commentDTO)
+        {
+            try
+            {
+                _logger.LogInformation($"[*] AddCommentToAuction called: Adding comment to auction\n Message: {commentDTO.Message}, UserID: {commentDTO.UserID}");
+
+                Auction auction = new Auction();
+                User user = new User();
+
+                auction = await _listingsCollection.Find(x => x.AuctionID == commentDTO.AuctionID).FirstOrDefaultAsync();
+                user = await _userCollection.Find(x => x.UserID == commentDTO.UserID).FirstOrDefaultAsync();
+
+                var filter = Builders<Auction>.Filter.Eq("AuctionID", commentDTO.AuctionID);
+
+                Comment newComment = new Comment
+                {
+                    CommentID = ObjectId.GenerateNewId().ToString(),
+                    UserID = user.UserID,
+                    Username = user.Username,
+                    DateCreated = DateTime.Now,
+                    Message = commentDTO.Message
+                };
+
+                var update = Builders<Auction>.Update.Push("Comments", newComment);
+
+                var result = _listingsCollection.UpdateOne(filter, update);
+
+                _logger.LogInformation($"[*] Listing collection update with one new comment\n CommentID: {newComment.CommentID}, UserID: {newComment.UserID}, Username: {newComment.Username}, DateCreated: {newComment.DateCreated}, Message: {newComment.Message}");
+
+                return newComment;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"EXCEPTION CAUGHT: {ex.Message}");
+
+                throw;
+            }
+        }
+
+
     }
 }

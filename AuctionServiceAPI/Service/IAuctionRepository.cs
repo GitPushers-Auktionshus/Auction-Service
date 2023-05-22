@@ -8,6 +8,8 @@ namespace AuctionServiceAPI.Service
     {
         public Task<Bid> AddBidToAuction(BidDTO bidDTO);
 
+        public Task<Comment> AddCommentToAuction(CommentDTO commentDTO);
+
     }
 
 }
