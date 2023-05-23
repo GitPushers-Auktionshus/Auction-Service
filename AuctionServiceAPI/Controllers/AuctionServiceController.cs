@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AuctionServiceAPI.Model;
 using AuctionServiceAPI.Service;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuctionServiceAPI.Controllers;
 
@@ -22,6 +23,7 @@ public class AuctionServiceController : ControllerBase
     }
 
     //PUT - Adds a new bid
+    [Authorize]
     [HttpPut("addBid")]
     public async Task<BidDTO> AddBid(BidDTO bidDTO)
     {
@@ -31,6 +33,7 @@ public class AuctionServiceController : ControllerBase
     }
 
     //PUT - Adds a new comment
+    [Authorize]
     [HttpPut("addComment")]
     public async Task<Comment> AddComment(CommentDTO commentDTO)
     {

@@ -39,7 +39,7 @@ namespace AuctionServiceAPI.Service
         private readonly IMongoCollection<Article> _articleCollection;
         private readonly IMongoCollection<Auction> _listingsCollection;
 
-        public MongoDBService(ILogger<AuctionServiceController> logger, IConfiguration config)
+        public MongoDBService(ILogger<AuctionServiceController> logger, IConfiguration config, EnvVariables vaultSecrets)
         {
             _logger = logger;
             _config = config;
@@ -47,20 +47,27 @@ namespace AuctionServiceAPI.Service
             try
             {
                 // Retrieves enviroment variables from program.cs, from injected EnviromentVariables class 
-                //_secret = config["Secret"] ?? "Secret missing";
-                //_issuer = config["Issuer"] ?? "Issue'er missing";
-                _connectionURI = config["ConnectionURI"] ?? "ConnectionURI missing";
+                _connectionURI = vaultSecrets.dictionary["ConnectionURI"];
+
+                // Retrieves the hostname of RabbitMQ from the docker compose file
                 _hostName = config["HostnameRabbit"];
 
+                // User database and collections
+                _usersDatabase = config["UsersDatabase"] ?? "UsersDatabase missing";
+                _userCollectionName = config["UserCollection"] ?? "UserCollectionName missing";
+                _auctionHouseCollectionName = config["AuctionHouseCollection"] ?? "AuctionHouseCollectionName missing";
 
-                //// Retrieves User database and collections
-                //_usersDatabase = config["UsersDatabagitse"] ?? "Userdatabase missing";
-                //_userCollectionName = config["UserCollection"] ?? "Usercollection name missing";
-                //_auctionHouseCollectionName = config["AuctionHouseCollection"] ?? "Auctionhousecollection name missing";
+                // Inventory database and collection
+                _inventoryDatabase = config["InventoryDatabase"] ?? "InventoryDatabase missing";
+                _articleCollectionName = config["ArticleCollection"] ?? "ArticleCollectionName missing";
 
-                //// Retrieves Inventory database and collection
-                //_inventoryDatabase = config["InventoryDatabase"] ?? "Invetorydatabase missing";
-                //_articleCollectionName = config["ArticleCollection"] ?? "Articlecollection name missing";
+                // Auction database and collection
+                _auctionsDatabase = config["AuctionsDatabase"] ?? "AuctionDatabase missing";
+                _listingsCollectionName = config["AuctionCollection"] ?? "AuctionCollectionName missing";
+
+
+                _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}, HostnameRabbit: {_hostName}");
+                _logger.LogInformation($"ArticleService Database and Collections: Userdatabase: {_usersDatabase}, Inventorydatabase: {_inventoryDatabase}, Auctiondatabase: {_auctionsDatabase}, UserCollection: {_userCollectionName}, AuctionHouseCollection: {_auctionHouseCollectionName}, ArticleCollection: {_articleCollectionName}, ListingsCollection: {_listingsCollectionName}");
 
             }
             catch (Exception ex)
@@ -69,26 +76,6 @@ namespace AuctionServiceAPI.Service
 
                 throw;
             }
-
-
-            // User database and collections
-            _usersDatabase = "Users";
-            _userCollectionName = "user";
-            _auctionHouseCollectionName = "auctionhouse";
-
-            // Inventory database and collection
-            _inventoryDatabase = "Inventory";
-            _articleCollectionName = "article";
-
-            // Auction database and collection
-            _auctionsDatabase = "Auctions";
-            _listingsCollectionName = "listing";
-
-
-            //_imagePath = "/Users/jacobkaae/Downloads/";
-
-            _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}, HostnameRabbit: {_hostName}");
-            _logger.LogInformation($"ArticleService Database and Collections: Userdatabase: {_usersDatabase}, Inventorydatabase: {_inventoryDatabase}, Auctiondatabase: {_auctionsDatabase}, UserCollection: {_userCollectionName}, AuctionHouseCollection: {_auctionHouseCollectionName}, ArticleCollection: {_articleCollectionName}, ListingsCollection: {_listingsCollectionName}");
 
             try
             {
