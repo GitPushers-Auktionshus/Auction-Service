@@ -115,7 +115,7 @@ namespace AuctionServiceAPI.Service
             }
         }
 
-        public async Task<Bid> AddBidToAuction(BidDTO bidDTO)
+        public async Task<BidDTO> AddBidToAuction(BidDTO bidDTO)
         {
             try
             {
@@ -123,6 +123,7 @@ namespace AuctionServiceAPI.Service
 
                 Auction auction = new Auction();
 
+                // Finds the auction to which the bid needs to be added to
                 auction = await _listingsCollection.Find(x => x.AuctionID == bidDTO.AuctionID).FirstOrDefaultAsync();
 
                 if (auction == null)
@@ -131,13 +132,16 @@ namespace AuctionServiceAPI.Service
 
                     return null;
                 }
-                else if (auction.StartDate < DateTime.Now && auction.EndDate > DateTime.Now)
+                // Checks if the auction is active at the current time
+                else if (auction.StartDate <= DateTime.Now && auction.EndDate >= DateTime.Now)
                 {
                     _logger.LogInformation("Auction active");
 
+                    // Checks if the posted bid is higher than the current highest bid.
+                    // If it isn't it returns null
                     if (bidDTO.Price > auction.HighestBid)
                     {
-                        //Opretter forbindelse til RabbitMQ
+                        // Connects to RabbitMQ
                         var factory = new ConnectionFactory
                         {
                             HostName = _hostName
@@ -146,17 +150,18 @@ namespace AuctionServiceAPI.Service
                         using var connection = factory.CreateConnection();
                         using var channel = connection.CreateModel();
 
+                        // Declares the topic exchange "AuctionHouse"
                         channel.ExchangeDeclare(exchange: "AuctionHouse", type: ExchangeType.Topic);
 
-                        // Serialiseres til JSON
+                        // Serializes the bidDTO to JSON
                         string message = JsonSerializer.Serialize(bidDTO);
 
                         _logger.LogInformation($"JsonSerialized message: \n\t{message}");
 
-                        // Konverteres til byte-array
+                        // Converts to byte-array
                         var body = Encoding.UTF8.GetBytes(message);
 
-                        // Sendes til Service-køen
+                        // Send the message to the AuctionHouse topic
                         channel.BasicPublish(exchange: "AuctionHouse",
                                              routingKey: "AuctionBid",
                                              basicProperties: null,
@@ -164,7 +169,7 @@ namespace AuctionServiceAPI.Service
 
                         _logger.LogInformation($"Bid created and posted");
 
-                        return null;
+                        return bidDTO;
 
                     }
 
@@ -197,11 +202,14 @@ namespace AuctionServiceAPI.Service
                 Auction auction = new Auction();
                 User user = new User();
 
+                // Finds the auction, unto which the comment is going to be added, and the user that added the comment
                 auction = await _listingsCollection.Find(x => x.AuctionID == commentDTO.AuctionID).FirstOrDefaultAsync();
                 user = await _userCollection.Find(x => x.UserID == commentDTO.UserID).FirstOrDefaultAsync();
 
+                // Creates a filter that finds a specific auction based on the commentDTO's auction ID
                 var filter = Builders<Auction>.Filter.Eq("AuctionID", commentDTO.AuctionID);
 
+                // Creates a new comment object based on the commentDTO
                 Comment newComment = new Comment
                 {
                     CommentID = ObjectId.GenerateNewId().ToString(),
@@ -211,8 +219,10 @@ namespace AuctionServiceAPI.Service
                     Message = commentDTO.Message
                 };
 
+                // Creates an update definition for the database to use. In this case we need to update the "Comments" property
                 var update = Builders<Auction>.Update.Push("Comments", newComment);
 
+                // Updates the listing collection and adds the comment to the auction
                 var result = _listingsCollection.UpdateOne(filter, update);
 
                 _logger.LogInformation($"[*] Listing collection update with one new comment\n CommentID: {newComment.CommentID}, UserID: {newComment.UserID}, Username: {newComment.Username}, DateCreated: {newComment.DateCreated}, Message: {newComment.Message}");

@@ -23,7 +23,7 @@ public class AuctionServiceController : ControllerBase
 
     //PUT - Adds a new bid
     [HttpPut("addBid")]
-    public async Task<Bid> AddBid(BidDTO bidDTO)
+    public async Task<BidDTO> AddBid(BidDTO bidDTO)
     {
         _logger.LogInformation($"[PUT] addBid endpoint reached");
 
