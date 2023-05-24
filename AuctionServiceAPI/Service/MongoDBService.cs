@@ -124,9 +124,14 @@ namespace AuctionServiceAPI.Service
                 {
                     _logger.LogInformation("Auction active");
 
-                    // Checks if the posted bid is higher than the current highest bid.
+                    // Setting the minimum price increase.
+                    // Current price increase is 2%
+                    double percentageIncrease = 1.02;
+                    double nextBid = auction.HighestBid * percentageIncrease;
+
+                    // Checks if the posted bid is higher than the current highest bid * percentageIncrease.
                     // If it isn't it returns null
-                    if (bidDTO.Price > auction.HighestBid)
+                    if (bidDTO.Price > nextBid)
                     {
                         // Connects to RabbitMQ
                         var factory = new ConnectionFactory
