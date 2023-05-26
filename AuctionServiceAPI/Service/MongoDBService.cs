@@ -117,7 +117,7 @@ namespace AuctionServiceAPI.Service
                 {
                     _logger.LogError("Auction not found");
 
-                    return null;
+                    throw new Exception("Auction is null");
                 }
                 // Checks if the auction is active at the current time
                 else if (auction.StartDate <= DateTime.Now && auction.EndDate >= DateTime.Now)
@@ -167,14 +167,14 @@ namespace AuctionServiceAPI.Service
 
                     _logger.LogInformation($"Current bid ({bidDTO.Price}) must be higher than the highest bid ({auction.HighestBid})");
 
-                    return null;
+                    throw new Exception("Bid is not high enough");
 
                 }
                 else
                 {
                     _logger.LogError("Auction not active");
 
-                    return null;
+                    throw new Exception("Auction is not active");
                 }
             }
             catch (Exception ex)
@@ -183,6 +183,7 @@ namespace AuctionServiceAPI.Service
 
                 throw;
             }
+
         }
 
         public async Task<Comment> AddCommentToAuction(CommentDTO commentDTO)

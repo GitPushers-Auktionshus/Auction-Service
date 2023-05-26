@@ -25,11 +25,23 @@ public class AuctionServiceController : ControllerBase
     //PUT - Adds a new bid
     [Authorize]
     [HttpPut("addBid")]
-    public async Task<BidDTO> AddBid(BidDTO bidDTO)
+    public async Task<IActionResult> AddBid(BidDTO bidDTO)
     {
         _logger.LogInformation($"[PUT] addBid endpoint reached");
 
-        return await _service.AddBidToAuction(bidDTO);
+        try
+        {
+            BidDTO addedBid = await _service.AddBidToAuction(bidDTO);
+            return new ObjectResult(addedBid)
+            {
+                StatusCode = 201
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while adding a new bid.");
+            return BadRequest();
+        }
     }
 
     //PUT - Adds a new comment
