@@ -29,7 +29,9 @@ namespace AuctionServiceAPI.Service
         private readonly string _articleCollectionName;
         private readonly string _auctionHouseCollectionName;
         private readonly string _listingsCollectionName;
+
         private readonly string _hostName;
+        private readonly string _hostPort;
 
         private readonly string _imagePath;
 
@@ -50,7 +52,8 @@ namespace AuctionServiceAPI.Service
                 _connectionURI = vaultSecrets.dictionary["ConnectionURI"];
 
                 // Retrieves the hostname of RabbitMQ from the docker compose file
-                _hostName = config["HostnameRabbit"];
+                _hostName = config["HostnameRabbit"] ?? "HostnameRabbit Missing";
+                _hostPort = config["PortRabbit"] ?? "PortRabbit Missing";
 
                 // User database and collections
                 _usersDatabase = config["UsersDatabase"] ?? "UsersDatabase missing";
@@ -66,7 +69,7 @@ namespace AuctionServiceAPI.Service
                 _listingsCollectionName = config["AuctionCollection"] ?? "AuctionCollectionName missing";
 
 
-                _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}, HostnameRabbit: {_hostName}");
+                _logger.LogInformation($"ArticleService secrets: ConnectionURI: {_connectionURI}, HostnameRabbit: {_hostName}, PortRabbit: {_hostPort}");
                 _logger.LogInformation($"ArticleService Database and Collections: Userdatabase: {_usersDatabase}, Inventorydatabase: {_inventoryDatabase}, Auctiondatabase: {_auctionsDatabase}, UserCollection: {_userCollectionName}, AuctionHouseCollection: {_auctionHouseCollectionName}, ArticleCollection: {_articleCollectionName}, ListingsCollection: {_listingsCollectionName}");
 
             }
@@ -136,7 +139,8 @@ namespace AuctionServiceAPI.Service
                         // Connects to RabbitMQ
                         var factory = new ConnectionFactory
                         {
-                            HostName = _hostName
+                            HostName = _hostName,
+                            Port = int.Parse(_hostPort)
                         };
 
                         using var connection = factory.CreateConnection();
